@@ -8,72 +8,62 @@ CITY_DATA = {
     'washington': 'washington.csv'
 }
 
+def print_section(title):
+    print(f"\n{'='*10} {title} {'='*10}\n")
+
 def get_filters():
     """
     Asks user to specify a city, month, and day to analyze.
-
     Returns:
-        (str) city - name of the city to analyze
-        (str) month - name of the month to filter by, or "all" to apply no month filter
-        (str) day - name of the day of week to filter by, or "all" to apply no day filter
+        (str) city
+        (str) month
+        (str) day
     """
-   
     cities = ['chicago', 'new york city', 'washington']
     months = ['january', 'february', 'march', 'april', 'may', 'june', 'all']
     days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday', 'all']
 
     while True:
-        city = input("Which city would you like to explore? (Chicago, New York City, Washington): ").lower()
+        city = input("Enter a city (Chicago, New York City, Washington): ").strip().lower()
         if city in cities:
             break
-        else:
-            print("Invalid input. Please choose from: Chicago, New York City, or Washington.")
+        print("Invalid input. Please choose a valid city.")
 
     while True:
-        month = input("Which month? (January to June or enter all): ").lower()
+        month = input("Enter a month (January to June) or 'all': ").strip().lower()
         if month in months:
             break
-        else:
-            print("Invalid input. Please enter a valid month or enter all.")
+        print("Invalid input. Please choose a valid month or 'all'.")
 
     while True:
-        day = input("Which day? (Monday to Sunday or enter all): ").lower()
+        day = input("Enter a day of the week or 'all': ").strip().lower()
         if day in days:
             break
-        else:
-            print("Invalid input. Please enter a valid day or all.")
+        print("Invalid input. Please choose a valid day or 'all'.")
 
     print('-'*40)
     return city, month, day
 
-def load_data(city, month, day):
-    """
-    Loads data for the specified city and filters by month and day if applicable.
-
-    Args:
-        (str) city - name of the city to analyze
-        (str) month - name of the month to filter by, or "all" to apply no month filter
-        (str) day - name of the day of week to filter by, or "all" to apply no day filter
-    Returns:
-        df - Pandas DataFrame containing city data filtered by month and day
-    """
-    df = pd.read_csv(CITY_DATA[city])
-    df['Start Time'] = pd.to_datetime(df['Start Time'])
+def add_time_columns(df):
     df['month'] = df['Start Time'].dt.month_name().str.lower()
     df['day_of_week'] = df['Start Time'].dt.day_name().str.lower()
     df['hour'] = df['Start Time'].dt.hour
+    return df
+
+def load_data(city, month, day):
+    df = pd.read_csv(CITY_DATA[city])
+    df['Start Time'] = pd.to_datetime(df['Start Time'])
+    df = add_time_columns(df)
 
     if month != 'all':
         df = df[df['month'] == month]
-
     if day != 'all':
         df = df[df['day_of_week'] == day]
 
     return df
 
 def time_stats(df):
-    """Displays statistics on the most frequent times of travel."""
-    print('\n Most Frequent Times of Travel\n')
+    print_section("Most Frequent Times of Travel")
     start_time = time.time()
 
     print("Most Frequent Month:", df['month'].mode()[0].title())
@@ -84,8 +74,7 @@ def time_stats(df):
     print('-'*40)
 
 def station_stats(df):
-    """Displays statistics on the most popular stations and trip."""
-    print('\n Most Popular Stations and Trip\n')
+    print_section("Most Popular Stations and Trip")
     start_time = time.time()
 
     print("Most Popular Start Station:", df['Start Station'].mode()[0])
@@ -97,8 +86,7 @@ def station_stats(df):
     print('-'*40)
 
 def trip_duration_stats(df):
-    """Displays statistics on the total and average trip duration."""
-    print('\nTrip Duration: \n')
+    print_section("Trip Duration")
     start_time = time.time()
 
     print("Total Travel Time:", df['Trip Duration'].sum(), "seconds")
@@ -108,8 +96,7 @@ def trip_duration_stats(df):
     print('-'*40)
 
 def user_stats(df):
-    """Displays statistics on bikeshare users."""
-    print('\Statistics On Bikeshare Users:\n')
+    print_section("Statistics On Bikeshare Users")
     start_time = time.time()
 
     print("User Type Counts:")
@@ -120,27 +107,26 @@ def user_stats(df):
         print(df['Gender'].value_counts())
 
     if 'Birth Year' in df.columns:
-        print("\n Earliest Birth Year:", int(df['Birth Year'].min()))
+        print("\nEarliest Birth Year:", int(df['Birth Year'].min()))
         print("Most Recent Birth Year:", int(df['Birth Year'].max()))
         print("Most Common Birth Year:", int(df['Birth Year'].mode()[0]))
 
     print("\nThis took %s seconds." % (time.time() - start_time))
     print('-'*40)
 
-def display_raw_data(df):
-    """Displays raw data 5 rows at a time upon user request."""
+def display_raw_data(df, rows=5):
     i = 0
     while True:
-        raw = input("\n Do you want to see 5 lines of raw data? Enter yes or no. \n").lower()
+        raw = input(f"\nWould you like to see {rows} rows of raw data? Enter yes or no: ").lower()
         if raw != 'yes':
             break
-        print(df.iloc[i:i+5])
-        i += 5
+        print(df.iloc[i:i+rows])
+        i += rows
         if i >= len(df):
-            print("\nNo more data to show.")
+            print("\nNo more data to display.")
             break
 
-def main():
+def main_menu():
     while True:
         city, month, day = get_filters()
         df = load_data(city, month, day)
@@ -151,9 +137,8 @@ def main():
         user_stats(df)
         display_raw_data(df)
 
-        restart = input('\nDo you want to restart? Enter yes or no.\n')
-        if restart.lower() != 'yes':
+        if input('\nDo you want to restart? Enter yes or no: ').lower() != 'yes':
             break
 
 if __name__ == "__main__":
-    main()
+    main_menu()
